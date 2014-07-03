@@ -1,0 +1,44 @@
+#cloud-config
+
+coreos:
+  etcd:
+      #discovery: https://discovery.etcd.io/XYZ
+      addr: $public_ipv4:4001
+      peer-addr: $public_ipv4:7001
+  units:
+    - name: etcd.service
+      command: start
+    - name: docker-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+
+        [Socket]
+        ListenStream=4243
+        Service=docker.service
+        BindIPv6Only=both
+
+        [Install]
+        WantedBy=sockets.target
+    - name: docker-registry-service.service
+      command: start
+      runtime: no
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Registry Service
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        ExecStartPre=/var/lib/docker-registry-service/docker-registry-service build
+        ExecStart=/var/lib/docker-registry-service/docker-registry-service run
+        ExecStartPost=/usr/bin/etcdctl set /inaetics/docker-registry-service/%m $public_ipv4:3142
+        ExecStopPost=/usr/bin/etcdctl rm /inaetics/docker-registry-service/%m
+        TimeoutSec=600
+        Restart=always
+ 
+        [Install]
+        WantedBy=multi-user.target

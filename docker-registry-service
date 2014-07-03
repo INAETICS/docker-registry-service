@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Control Docker Registry Service build|run|stop|start with docker
+#
+# This is just a very simple helper. Use docker directly
+# for full options (see http://www.docker.com/)
+
+COMMAND=$1
+
+ORGDIR=`pwd`
+cd $(dirname $0)
+WORKDIR=`pwd`
+
+start_up () {
+    docker start docker-registry-service > /dev/null 2> /dev/null
+    if [ $? -gt 0 ]; then
+      docker run --name docker-registry-service -d -p 5000:5000 \
+         -v $WORKDIR/conf:/registry-conf -v $WORKDIR/data/:/tmp/registry \
+         -e DOCKER_REGISTRY_CONFIG=/registry-conf/config.yml registry > /dev/null 2> /dev/null
+    fi
+}
+
+clean_up () {
+    docker stop docker-registry-service > /dev/null 2>/dev/null
+    docker rm docker-registry-service >/dev/null 2>/dev/null
+    exit
+}
+
+case "$COMMAND" in
+  build)
+    echo "Pulling image registry"
+    docker pull registry:latest > /dev/null 2>/dev/null
+    ;;
+  run)
+    echo "Running Docker Registry Service" 
+    start_up
+    trap clean_up SIGHUP SIGINT SIGTERM
+    while true; do sleep 10; done
+    ;;
+  start)
+    echo "Starting Docker Registry Service" 
+    start_up
+    ;;
+  stop)
+    echo "Stopping Docker Registry Service" 
+    clean_up
+    ;;
+  *)
+    echo "Usage: $0 {build|run|start|stop}"
+    exit 1
+    ;;
+esac
+
+cd $ORGDIR
+exit 0

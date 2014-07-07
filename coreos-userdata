@@ -22,6 +22,18 @@ coreos:
 
         [Install]
         WantedBy=sockets.target
+    - name: install-docker-registry-service.service
+      command: start
+      runtime: yes
+      content: |
+        [Unit]
+        Description=Install the Docker Registry Service
+        Before=docker-registry-service.service
+        ConditionPathExists=!/var/lib/docker-registry-service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/git clone https://github.com/INAETICS/docker-registry-service.git /var/lib/docker-registry-service
     - name: docker-registry-service.service
       command: start
       runtime: no

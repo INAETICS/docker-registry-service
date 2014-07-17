@@ -2,7 +2,7 @@
 
 coreos:
   etcd:
-      #discovery: https://discovery.etcd.io/XYZ
+      discovery: http://172.17.8.100:4001/v2/keys/testcluster
       addr: $public_ipv4:4001
       peer-addr: $public_ipv4:7001
   units:
@@ -22,18 +22,6 @@ coreos:
 
         [Install]
         WantedBy=sockets.target
-    - name: install-docker-registry-service.service
-      command: start
-      runtime: yes
-      content: |
-        [Unit]
-        Description=Install the Docker Registry Service
-        Before=docker-registry-service.service
-        ConditionPathExists=!/var/lib/docker-registry-service
-
-        [Service]
-        Type=oneshot
-        ExecStart=/usr/bin/git clone https://github.com/INAETICS/docker-registry-service.git /var/lib/docker-registry-service
     - name: docker-registry-service.service
       command: start
       runtime: no
@@ -45,12 +33,27 @@ coreos:
         Requires=docker.service
 
         [Service]
+        ExecStartPre=/bin/bash -c 'if [ ! -d "/var/lib/docker-registry-service" ]; then git clone https://github.com/INAETICS/docker-registry-service.git /var/lib/docker-registry-service; else cd /var/lib/docker-registry-service; git pull; cd -; fi'
         ExecStartPre=/var/lib/docker-registry-service/docker-registry-service build
         ExecStart=/var/lib/docker-registry-service/docker-registry-service run
-        ExecStartPost=/usr/bin/etcdctl set /inaetics/docker-registry-service/%m $public_ipv4:3142
-        ExecStopPost=/usr/bin/etcdctl rm /inaetics/docker-registry-service/%m
         TimeoutSec=600
         Restart=always
- 
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-registry-announce.service
+      command: start
+      runtime: no
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Registry Announce
+        BindsTo=docker-registry-service.service
+
+        [Service]
+        ExecStart=/bin/sh -c "while true; do etcdctl set /inaetics/docker-registry-service/%m $public_ipv4:8080 --ttl 60; sleep 45; done"
+        ExecStopPost=/usr/bin/etcdctl rm /inaetics/docker-registry-service/%m
+
         [Install]
         WantedBy=multi-user.target

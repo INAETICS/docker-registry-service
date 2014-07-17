@@ -52,7 +52,7 @@ coreos:
         BindsTo=docker-registry-service.service
 
         [Service]
-        ExecStart=/bin/sh -c "while true; do etcdctl set /inaetics/docker-registry-service/%m $public_ipv4:8080 --ttl 60; sleep 45; done"
+        ExecStart=/bin/sh -c "while true; do etcdctl set /inaetics/docker-registry-service/%m $public_ipv4:5000 --ttl 60; sleep 45; done"
         ExecStopPost=/usr/bin/etcdctl rm /inaetics/docker-registry-service/%m
 
         [Install]

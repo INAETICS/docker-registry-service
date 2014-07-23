@@ -12,9 +12,9 @@ common:
     sqlalchemy_index_database: _env:SQLALCHEMY_INDEX_DATABASE:sqlite:////tmp/docker-registry.db
 
     mirroring:
-        source: _env:MIRROR_SOURCE # https://registry-1.docker.io
-        source_index: _env:MIRROR_SOURCE_INDEX # https://index.docker.io
-        tags_cache_ttl: _env:MIRROR_TAGS_CACHE_TTL # 864000 # seconds
+        source: https://registry-1.docker.io
+        source_index: https://index.docker.io
+        tags_cache_ttl: 172800 # 2 days
 
     # Enabling LRU cache for small files. This speeds up read/write on small files
     # when using a remote storage backend (like S3).

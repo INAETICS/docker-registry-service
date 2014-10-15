@@ -3,6 +3,7 @@
 coreos:
   etcd:
       discovery: http://172.17.8.100:4001/v2/keys/testcluster
+      name: docker-registry-service
       addr: $public_ipv4:4001
       peer-addr: $public_ipv4:7001
   units:

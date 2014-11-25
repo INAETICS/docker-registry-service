@@ -16,7 +16,7 @@ start_up () {
     if [ $? -gt 0 ]; then
       docker run --name docker-registry-service -d -p 5000:5000 \
          -v $WORKDIR/conf:/registry-conf -v $WORKDIR/data/:/tmp/registry \
-         -e DOCKER_REGISTRY_CONFIG=/registry-conf/config.yml registry > /dev/null 2> /dev/null
+         -e DOCKER_REGISTRY_CONFIG=/registry-conf/config.yml -e GUNICORN_OPTS=[--preload] registry > /dev/null 2> /dev/null
     fi
 }
 
